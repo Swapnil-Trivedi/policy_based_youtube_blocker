@@ -17,7 +17,7 @@ function extractVideoId(url) {
         const thumbnail = el.querySelector("img");
         if (thumbnail) {
           thumbnail.style.backgroundColor = "gray";
-          thumbnail.style.filter = "blur(4px)";  // Optional: Adding blur effect to mask it visually
+          thumbnail.style.filter = "blur(10px)";  // Optional: Adding blur effect to mask it visually
         }
   
         // Disable video play on hover (simulate hover block)
