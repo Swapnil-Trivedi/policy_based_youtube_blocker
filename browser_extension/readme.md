@@ -23,3 +23,10 @@ Content scripts are injected by the extension and can access the DOM of web page
 
 Browser extensions often request specific permissions to access certain resources, such as tabs, browsing history, or other websites.
 Permissions are declared in the manifest.json file.
+
+#### How to run
+
+1. open chrome://extensions/
+2. enable developer mode
+3. load extension pack
+4. run youtbe and verify on console
