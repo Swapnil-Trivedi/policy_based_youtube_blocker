@@ -5,19 +5,39 @@ function extractVideoId(url) {
     return match ? match[1] : null;
   }
   
-  // Function to extract and log video IDs on the page
+  // Maintain an array of video IDs to avoid duplicates
+  let videoIds = [];
+  
+  // Function to log the video IDs array
   function logVideoIds() {
-    const videoIds = [];
+    console.log("All Video IDs on this page:", videoIds);
+  }
+  
+  // Function to add new video IDs to the array
+  function addVideoIds(newVideoIds) {
+    newVideoIds.forEach((videoId) => {
+      if (!videoIds.includes(videoId)) {
+        videoIds.push(videoId);  // Add new video ID if not already in the array
+      }
+    });
+    logVideoIds();  // Log the updated video IDs array
+  }
+  
+  // Function to extract and process video IDs on the page
+  function processVideoElements() {
     const videoElements = document.querySelectorAll('a[href*="watch?v="]');
+    const newVideoIds = [];
   
     videoElements.forEach((el) => {
       const videoId = extractVideoId(el.href);
-      if (videoId) {
-        videoIds.push(videoId);
+      if (videoId && !newVideoIds.includes(videoId)) {
+        newVideoIds.push(videoId);  // Add video ID if it's not already in the list
       }
     });
   
-    console.log("Video IDs on this page: ", videoIds);
+    if (newVideoIds.length > 0) {
+      addVideoIds(newVideoIds);  // Add new video IDs to the internal array
+    }
   }
   
   // Check if we're on a single video page
@@ -29,11 +49,11 @@ function extractVideoId(url) {
     }
   } else if (window.location.href.includes("youtube.com")) {
     // Log video IDs initially on the page load
-    logVideoIds();
+    processVideoElements();
   
     // Set up a MutationObserver to track dynamically loaded content (infinite scroll)
     const observer = new MutationObserver(() => {
-      logVideoIds();  // Log video IDs every time new videos are added
+      processVideoElements();  // Process and log new video IDs whenever DOM changes
     });
   
     // Observe the body of the document for changes in child elements (new videos added)
@@ -46,7 +66,7 @@ function extractVideoId(url) {
     window.addEventListener("scroll", () => {
       // You can limit the number of checks to avoid performance issues
       if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
-        logVideoIds();  // Log video IDs when scrolling to the bottom
+        processVideoElements();  // Process and log new video IDs when scrolling to the bottom
       }
     });
   }
