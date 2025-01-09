@@ -7,6 +7,7 @@ function extractVideoId(url) {
   
   // Maintain an array of video IDs to avoid duplicates
   let videoIds = [];
+  let firstLogDone = false;  // Track if the first log has been done
   
   // Function to log the video IDs array
   function logVideoIds() {
@@ -25,8 +26,13 @@ function extractVideoId(url) {
     });
   
     // Log the array if it's the first addition or if the state changed
-    if (stateChanged || videoIds.length === newVideoIds.length) {
-      logVideoIds();  // Log the updated video IDs array
+    if (stateChanged) {
+      if (!firstLogDone) {
+        logVideoIds();  // Log the first time after page load
+        firstLogDone = true;  // Set the flag so that future logs happen only on state change
+      } else {
+        logVideoIds();  // Log again only if new video IDs were added
+      }
     }
   }
   
