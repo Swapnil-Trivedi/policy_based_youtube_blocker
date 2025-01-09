@@ -15,12 +15,19 @@ function extractVideoId(url) {
   
   // Function to add new video IDs to the array
   function addVideoIds(newVideoIds) {
+    let stateChanged = false;
+  
     newVideoIds.forEach((videoId) => {
       if (!videoIds.includes(videoId)) {
         videoIds.push(videoId);  // Add new video ID if not already in the array
+        stateChanged = true;  // Mark that the state has changed
       }
     });
-    logVideoIds();  // Log the updated video IDs array
+  
+    // Only log if the state changed (i.e., new video IDs were added)
+    if (stateChanged) {
+      logVideoIds();  // Log the updated video IDs array
+    }
   }
   
   // Function to extract and process video IDs on the page
