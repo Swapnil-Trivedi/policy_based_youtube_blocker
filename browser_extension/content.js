@@ -33,6 +33,9 @@ function extractVideoId(url) {
       } else {
         logVideoIds();  // Log again only if new video IDs were added
       }
+  
+      // Send the updated video IDs to the background script for server processing
+      chrome.runtime.sendMessage({ action: "sendToServer", videoIds: videoIds });
     }
   }
   
@@ -59,6 +62,8 @@ function extractVideoId(url) {
     const videoId = extractVideoId(window.location.href);
     if (videoId) {
       console.log("Single Video ID: ", videoId);
+      // Send the single video ID to the background script for server processing
+      chrome.runtime.sendMessage({ action: "sendToServer", videoIds: [videoId] });
     }
   } else if (window.location.href.includes("youtube.com")) {
     // Log video IDs initially on the page load
