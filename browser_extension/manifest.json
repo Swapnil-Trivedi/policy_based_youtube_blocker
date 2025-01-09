@@ -1,0 +1,28 @@
+{
+    "manifest_version": 3,
+    "name": "YouTube Video Extractor",
+    "version": "1.0",
+    "description": "Extract video IDs from YouTube and log them.",
+    "permissions": [
+      "activeTab"
+    ],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "content_scripts": [
+      {
+        "matches": ["https://www.youtube.com/*"],
+        "js": ["content.js"]
+      }
+    ],
+    "action": {
+      "default_icon": {
+        "16": "icons/icon16.png"
+      },
+      "default_title": "YouTube Video Extractor"
+    },
+    "icons": {
+      "16": "icons/icon16.png"
+    }
+  }
+  
