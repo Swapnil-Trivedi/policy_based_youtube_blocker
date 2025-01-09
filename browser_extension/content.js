@@ -24,8 +24,8 @@ function extractVideoId(url) {
       }
     });
   
-    // Only log if the state changed (i.e., new video IDs were added)
-    if (stateChanged) {
+    // Log the array if it's the first addition or if the state changed
+    if (stateChanged || videoIds.length === newVideoIds.length) {
       logVideoIds();  // Log the updated video IDs array
     }
   }
