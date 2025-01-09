@@ -1,30 +1,33 @@
 // Function to extract video ID from a YouTube URL
 function extractVideoId(url) {
     const regex = /(?:v=|\/videos\/)([a-zA-Z0-9_-]{11})/;
-    const match = url.match(regex);
+    const match = url ? url.match(regex) : null;
     return match ? match[1] : null;
   }
   
-  // Function to mask blocked video thumbnails
+  // Function to mask blocked video thumbnails and make the entire div unclickable
   function applyVideoStatus(statusResponse) {
-    const videoElements = document.querySelectorAll('a[href*="watch?v="]');
+    const videoElements = document.querySelectorAll('a[href*="watch?v="], ytd-video-renderer, ytd-rich-item-renderer');
   
     videoElements.forEach((el) => {
-      const videoId = extractVideoId(el.href);
+      // Ensure we can safely extract the video ID, either from `href` or by checking for the `a` tag within the element
+      const videoId = extractVideoId(el.href) || (el.querySelector('a[href*="watch?v="]') && extractVideoId(el.querySelector('a[href*="watch?v="]').href));
   
       if (videoId && statusResponse[videoId] === "blocked") {
         // Mask thumbnail with solid grey
         const thumbnail = el.querySelector("img");
         if (thumbnail) {
-          thumbnail.style.backgroundColor = "gray";
-          thumbnail.style.filter = "blur(10px)";  // Optional: Adding blur effect to mask it visually
+          thumbnail.style.backgroundColor = "gray";  // Solid grey background for thumbnail
+          thumbnail.style.filter = "blur(10px)";    // Blur effect for thumbnail
         }
   
-        // Disable video play on hover (simulate hover block)
-        el.addEventListener("mouseenter", (e) => {
-          e.preventDefault();
-          alert(`Video with ID: ${videoId} is blocked.`);
-        });
+        // Apply blur and disable click interaction for the entire div (video element)
+        const videoDiv = el.closest('ytd-video-renderer, ytd-rich-item-renderer');
+        if (videoDiv) {
+          videoDiv.style.pointerEvents = "none";    // Make the entire video div unclickable
+          videoDiv.style.filter = "blur(10px)";     // Apply blur effect to the entire div
+          videoDiv.style.opacity = "0.6";           // Dim the opacity to indicate it is blocked
+        }
   
         // Redirect blocked video when clicked
         el.addEventListener("click", (e) => {
@@ -39,11 +42,13 @@ function extractVideoId(url) {
   let currentVideoIds = [];  // Internal array to track video IDs
   
   function processVideoElements() {
-    const videoElements = document.querySelectorAll('a[href*="watch?v="]');
+    const videoElements = document.querySelectorAll('a[href*="watch?v="], ytd-video-renderer, ytd-rich-item-renderer');
     const newVideoIds = [];
   
     videoElements.forEach((el) => {
-      const videoId = extractVideoId(el.href);
+      // Ensure we can safely extract the video ID, either from `href` or by checking for the `a` tag within the element
+      const videoId = extractVideoId(el.href) || (el.querySelector('a[href*="watch?v="]') && extractVideoId(el.querySelector('a[href*="watch?v="]').href));
+      
       if (videoId && !newVideoIds.includes(videoId)) {
         newVideoIds.push(videoId);  // Add video ID if it's not already in the list
       }
