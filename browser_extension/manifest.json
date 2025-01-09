@@ -5,8 +5,7 @@
     "version": "1.0",
     "permissions": [
       "activeTab",
-      "storage",
-      "http://localhost:8080/"
+      "storage"
     ],
     "background": {
       "service_worker": "background.js"
