@@ -5,41 +5,39 @@ function extractVideoId(url) {
     return match ? match[1] : null;
   }
   
-  // Maintain an array of video IDs to avoid duplicates
-  let videoIds = [];
-  let firstLogDone = false;  // Track if the first log has been done
+  // Function to mask blocked video thumbnails
+  function applyVideoStatus(statusResponse) {
+    const videoElements = document.querySelectorAll('a[href*="watch?v="]');
   
-  // Function to log the video IDs array
-  function logVideoIds() {
-    console.log("All Video IDs on this page:", videoIds);
-  }
+    videoElements.forEach((el) => {
+      const videoId = extractVideoId(el.href);
   
-  // Function to add new video IDs to the array
-  function addVideoIds(newVideoIds) {
-    let stateChanged = false;
+      if (videoId && statusResponse[videoId] === "blocked") {
+        // Mask thumbnail with solid grey
+        const thumbnail = el.querySelector("img");
+        if (thumbnail) {
+          thumbnail.style.backgroundColor = "gray";
+          thumbnail.style.filter = "blur(4px)";  // Optional: Adding blur effect to mask it visually
+        }
   
-    newVideoIds.forEach((videoId) => {
-      if (!videoIds.includes(videoId)) {
-        videoIds.push(videoId);  // Add new video ID if not already in the array
-        stateChanged = true;  // Mark that the state has changed
+        // Disable video play on hover (simulate hover block)
+        el.addEventListener("mouseenter", (e) => {
+          e.preventDefault();
+          alert(`Video with ID: ${videoId} is blocked.`);
+        });
+  
+        // Redirect blocked video when clicked
+        el.addEventListener("click", (e) => {
+          e.preventDefault();  // Prevent default action (opening the video)
+          window.location.href = "https://www.youtube.com";  // Redirect to YouTube homepage
+        });
       }
     });
-  
-    // Log the array if it's the first addition or if the state changed
-    if (stateChanged) {
-      if (!firstLogDone) {
-        logVideoIds();  // Log the first time after page load
-        firstLogDone = true;  // Set the flag so that future logs happen only on state change
-      } else {
-        logVideoIds();  // Log again only if new video IDs were added
-      }
-  
-      // Send the updated video IDs to the background script for server processing
-      chrome.runtime.sendMessage({ action: "sendToServer", videoIds: videoIds });
-    }
   }
   
-  // Function to extract and process video IDs on the page
+  // Function to track and process video IDs in a state array
+  let currentVideoIds = [];  // Internal array to track video IDs
+  
   function processVideoElements() {
     const videoElements = document.querySelectorAll('a[href*="watch?v="]');
     const newVideoIds = [];
@@ -51,19 +49,39 @@ function extractVideoId(url) {
       }
     });
   
+    // If there are new video IDs, update the state and send to background.js
     if (newVideoIds.length > 0) {
-      addVideoIds(newVideoIds);  // Add new video IDs to the internal array
+      const addedVideoIds = newVideoIds.filter(id => !currentVideoIds.includes(id));
+      const allVideoIds = [...currentVideoIds, ...addedVideoIds];  // Merge new IDs with the current state
+  
+      if (addedVideoIds.length > 0) {
+        currentVideoIds = allVideoIds;  // Update the state only if there is a change
+        console.log("Updated video IDs:", currentVideoIds);  // Log the updated video IDs to the console
+        // Send the updated video IDs to background.js
+        chrome.runtime.sendMessage({
+          action: "sendToServer",
+          videoIds: addedVideoIds  // Send only new video IDs to the server
+        });
+      }
     }
   }
   
+  // Listen for status messages from background.js
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "applyVideoStatus") {
+      const videoIdsWithStatus = message.videoIdsWithStatus;
+      applyVideoStatus(videoIdsWithStatus);  // Apply the blocking logic based on video statuses
+    }
+  });
+  
   // Check if we're on a single video page
   if (window.location.href.includes("youtube.com/watch")) {
-    // Log the single video ID
     const videoId = extractVideoId(window.location.href);
     if (videoId) {
       console.log("Single Video ID: ", videoId);
-      // Send the single video ID to the background script for server processing
-      chrome.runtime.sendMessage({ action: "sendToServer", videoIds: [videoId] });
+      // Simulate backend response (random status assignment for now)
+      const simulatedStatusResponse = simulateBackendResponse([videoId]);
+      applyVideoStatus(simulatedStatusResponse);
     }
   } else if (window.location.href.includes("youtube.com")) {
     // Log video IDs initially on the page load
@@ -82,10 +100,20 @@ function extractVideoId(url) {
   
     // Optional: Set up scroll event listener if needed (less efficient than MutationObserver)
     window.addEventListener("scroll", () => {
-      // You can limit the number of checks to avoid performance issues
       if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
         processVideoElements();  // Process and log new video IDs when scrolling to the bottom
       }
     });
+  }
+  
+  // Function to simulate backend response (for now, returns random 'allowed' or 'blocked' status)
+  function simulateBackendResponse(videoIds) {
+    const statusResponse = {};
+    videoIds.forEach((videoId) => {
+      // Randomly assign 'allowed' or 'blocked'
+      const status = Math.random() > 0.5 ? 'allowed' : 'blocked';
+      statusResponse[videoId] = status;
+    });
+    return statusResponse;
   }
   
